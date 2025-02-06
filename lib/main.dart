@@ -1,64 +1,86 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(RunMyApp());
+  runApp(MyApp());
 }
 
-class RunMyApp extends StatefulWidget {
-  const RunMyApp({super.key});
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: DefaultTabController(
+        length: 3,
+        child: PetApp(),
+      ),
+    );
+  }
+}
+
+class PetApp extends StatefulWidget {
+  @override
+  _PetAppState createState() => _PetAppState();
+}
+
+class _PetAppState extends State<PetApp>
+    with SingleTickerProviderStateMixin, RestorationMixin {
+  late TabController _tabController;
+
+  final RestorableInt tabIndex = RestorableInt(0);
 
   @override
-  State<RunMyApp> createState() => _RunMyAppState();
-}
+  String get restorationId => 'pet_app_tabs';
 
-class _RunMyAppState extends State<RunMyApp> {
-  ThemeMode _themeMode = ThemeMode.system; // Variable to store theme mode
+  @override
+  void restoreState(RestorationBucket? oldBucket, bool initialRestore) {
+    registerForRestoration(tabIndex, 'tab_index');
+    _tabController.index = tabIndex.value;
+  }
 
-  // Method to change the theme
-  void changeTheme(ThemeMode themeMode) {
-    setState(() {
-      _themeMode = themeMode;
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(
+      initialIndex: 0,
+      length: 3,
+      vsync: this,
+    );
+    _tabController.addListener(() {
+      setState(() {
+        tabIndex.value = _tabController.index;
+      });
     });
   }
 
   @override
+  void dispose() {
+    _tabController.dispose();
+    tabIndex.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: ThemeData(primarySwatch: Colors.blueGrey), // Light theme
-      darkTheme: ThemeData.dark(), // Dark theme
-      themeMode: _themeMode, // Set themeMode to selected value
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text('Welcome To My Flutter App!'),
+    final tabs = ['Pet Name', 'Feeding', 'Health Routine']; //tab names
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Pet Care App'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: tabs.map((tab) => Tab(text: tab)).toList(),
         ),
-        body: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Choose the Theme:',
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                // Button to change to light theme
-                ElevatedButton(
-                  onPressed: () {
-                    changeTheme(ThemeMode.light);
-                  },
-                  child: const Text('Light Theme'),
-                ),
-                // Button to change to dark theme
-                ElevatedButton(
-                  onPressed: () {
-                    changeTheme(ThemeMode.dark);
-                  },
-                  child: const Text('Dark Theme'),
-                ),
-              ],
-            ),
-          ],
-        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          Center(child: Text('Pet Name: Max', style: TextStyle(fontSize: 20))),
+          Center(
+              child:
+                  Text('Feeding: Twice a day', style: TextStyle(fontSize: 20))),
+          Center(
+              child: Text('Health: Vet checkup every 6 months',
+                  style: TextStyle(fontSize: 20))),
+        ],
       ),
     );
   }
